@@ -1,0 +1,13 @@
+bin/
+obj/
+.vs/
+.vscode/
+
+*.user
+*.suo
+*.rsuser
+
+.env
+*.log
+
+qdrant_storage/
