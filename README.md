@@ -71,6 +71,12 @@ Ask a RAG question:
 dotnet run --project .\src\LocalRag.Console -- ask "What skills does this project show for a portfolio?"
 ```
 
+Recommended smoke-test question:
+
+```powershell
+dotnet run --project .\src\LocalRag.Console -- ask "What does this project use Ollama and Qdrant for?"
+```
+
 ## Configuration
 
 You can override defaults with environment variables:
