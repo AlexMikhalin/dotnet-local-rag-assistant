@@ -1,15 +1,36 @@
 # dotnet-local-rag-assistant
 
-Local-first RAG console application built with C#, Ollama, and Qdrant.
+Local-first **RAG (Retrieval-Augmented Generation)** console application built with **C#/.NET**, **Ollama as the local LLM runtime**, and **Qdrant as the vector database**.
 
-The app indexes local `.md` and `.txt` documents, stores embeddings in Qdrant, retrieves relevant chunks for a question, and asks a local Ollama model to answer using that context.
+The app indexes local `.md` and `.txt` documents, generates embeddings with Ollama, stores vectors and metadata in Qdrant, retrieves relevant context with vector search, and asks a local LLM to answer with grounded source context.
+
+This project demonstrates a practical end-to-end **LLM RAG pipeline in C#** without paid cloud APIs: document ingestion, chunking, embeddings, vector database storage, semantic retrieval, prompt construction, retrieval confidence, and source attribution.
+
+## RAG Pipeline
+
+```text
+Local documents
+  -> document discovery
+  -> text chunking
+  -> embeddings via Ollama
+  -> vector storage in Qdrant
+  -> user question
+  -> question embedding
+  -> semantic search in Qdrant
+  -> retrieved context + source metadata
+  -> grounded prompt
+  -> local LLM answer via Ollama
+  -> retrieval confidence + sources
+```
 
 ## Tech Stack
 
-- .NET console application
-- Ollama for local embeddings and chat
-- Qdrant vector database
-- Docker Compose
+- C# / .NET console application
+- Ollama as the local LLM runtime for embeddings and chat generation
+- Qdrant as the vector database for semantic search
+- RAG architecture with retrieval confidence and source attribution
+- Docker Compose for local infrastructure
+- xUnit tests for ingestion, retrieval, and application orchestration
 
 ## Prerequisites
 
@@ -43,7 +64,7 @@ Then type commands such as:
 ```text
 status
 ingest sample-docs
-ask "What does this project use Qdrant for?"
+ask "How does this C# project implement a local LLM RAG pipeline with Ollama and Qdrant?"
 exit
 ```
 
@@ -68,7 +89,7 @@ dotnet run --project .\src\LocalRag.Cli -- search "What does this project use Qd
 Ask a RAG question:
 
 ```powershell
-dotnet run --project .\src\LocalRag.Cli -- ask "What skills does this project show for a portfolio?"
+dotnet run --project .\src\LocalRag.Cli -- ask "How does this C# project implement a local LLM RAG pipeline with Ollama and Qdrant?"
 ```
 
 Recommended smoke-test question:
@@ -117,11 +138,14 @@ tests/
 
 - Document ingestion
 - Chunking
-- Embeddings
-- Vector search
-- RAG prompt construction
+- Local LLM integration with Ollama
+- Embeddings generation
+- Vector database integration with Qdrant
+- Semantic search over indexed documents
+- RAG prompt construction and grounding
 - Retrieval confidence scoring
 - Source attribution
+- Application ports for testable AI/vector infrastructure
 - Testable layered architecture
 - xUnit unit tests
 - Local AI workflow without paid cloud APIs
