@@ -32,6 +32,21 @@ docker compose up -d
 
 ## Run
 
+Start interactive mode:
+
+```powershell
+dotnet run --project .\src\LocalRag.Console
+```
+
+Then type commands such as:
+
+```text
+status
+ingest sample-docs
+ask "What does this project use Qdrant for?"
+exit
+```
+
 Check local services:
 
 ```powershell

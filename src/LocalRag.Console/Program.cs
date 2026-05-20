@@ -19,10 +19,54 @@ internal sealed class RagConsoleApp(RagSettings settings)
     {
         if (args.Length == 0)
         {
-            PrintHelp();
+            await RunInteractiveAsync();
             return;
         }
 
+        await RunCommandAsync(args);
+    }
+
+    private async Task RunInteractiveAsync()
+    {
+        Console.WriteLine("LocalRag.Console interactive mode");
+        Console.WriteLine("Type `help` to see commands or `exit` to close.");
+        Console.WriteLine();
+
+        while (true)
+        {
+            Console.Write("rag> ");
+            var line = Console.ReadLine();
+
+            if (line is null)
+            {
+                return;
+            }
+
+            var args = ParseCommandLine(line);
+            if (args.Length == 0)
+            {
+                continue;
+            }
+
+            var command = args[0].ToLowerInvariant();
+            if (command is "exit" or "quit")
+            {
+                return;
+            }
+
+            if (command is "clear" or "cls")
+            {
+                Console.Clear();
+                continue;
+            }
+
+            await RunCommandAsync(args);
+            Console.WriteLine();
+        }
+    }
+
+    private async Task RunCommandAsync(string[] args)
+    {
         var command = args[0].ToLowerInvariant();
         var commandArgs = args.Skip(1).ToArray();
 
@@ -59,6 +103,44 @@ internal sealed class RagConsoleApp(RagSettings settings)
             Console.WriteLine(ex.Message);
             Console.WriteLine();
             Console.WriteLine("Check that Qdrant is running with `docker compose up -d` and Ollama is running.");
+        }
+    }
+
+    private static string[] ParseCommandLine(string line)
+    {
+        var args = new List<string>();
+        var current = new StringBuilder();
+        var inQuotes = false;
+
+        foreach (var character in line)
+        {
+            if (character == '"')
+            {
+                inQuotes = !inQuotes;
+                continue;
+            }
+
+            if (char.IsWhiteSpace(character) && !inQuotes)
+            {
+                AddCurrentArg();
+                continue;
+            }
+
+            current.Append(character);
+        }
+
+        AddCurrentArg();
+        return args.ToArray();
+
+        void AddCurrentArg()
+        {
+            if (current.Length == 0)
+            {
+                return;
+            }
+
+            args.Add(current.ToString());
+            current.Clear();
         }
     }
 
@@ -213,6 +295,8 @@ internal sealed class RagConsoleApp(RagSettings settings)
         Console.WriteLine("  ingest [path]                  Index .txt/.md documents, default: sample-docs");
         Console.WriteLine("  search \"question\"              Show retrieved chunks");
         Console.WriteLine("  ask \"question\"                 Answer using retrieved context");
+        Console.WriteLine("  clear                          Clear the interactive console");
+        Console.WriteLine("  exit                           Close interactive mode");
         Console.WriteLine();
         Console.WriteLine("Environment overrides:");
         Console.WriteLine("  OLLAMA_URL=http://localhost:11434");
