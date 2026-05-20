@@ -1,4 +1,4 @@
-# Local RAG System in C#
+# dotnet-local-rag-assistant
 
 Local-first RAG console application built with C#, Ollama, and Qdrant.
 
