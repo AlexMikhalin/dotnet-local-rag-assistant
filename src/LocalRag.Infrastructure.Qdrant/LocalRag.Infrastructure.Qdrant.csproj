@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\LocalRag.Application\LocalRag.Application.csproj" />
     <ProjectReference Include="..\LocalRag.Retrieval\LocalRag.Retrieval.csproj" />
   </ItemGroup>
 

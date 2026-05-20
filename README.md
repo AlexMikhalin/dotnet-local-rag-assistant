@@ -77,6 +77,14 @@ Recommended smoke-test question:
 dotnet run --project .\src\LocalRag.Cli -- ask "What does this project use Ollama and Qdrant for?"
 ```
 
+## Tests
+
+Run all unit tests:
+
+```powershell
+dotnet test
+```
+
 ## Configuration
 
 You can override defaults with environment variables:
@@ -99,6 +107,10 @@ src/
   LocalRag.Retrieval/                   Prompt building, scored chunks, confidence
   LocalRag.Infrastructure.Ollama/       Ollama HTTP client
   LocalRag.Infrastructure.Qdrant/       Qdrant HTTP client and point model
+tests/
+  LocalRag.Application.Tests/           Application orchestration tests with fakes
+  LocalRag.Ingestion.Tests/             Document discovery and chunking tests
+  LocalRag.Retrieval.Tests/             Prompt and confidence scoring tests
 ```
 
 ## What This Demonstrates
@@ -110,4 +122,6 @@ src/
 - RAG prompt construction
 - Retrieval confidence scoring
 - Source attribution
+- Testable layered architecture
+- xUnit unit tests
 - Local AI workflow without paid cloud APIs

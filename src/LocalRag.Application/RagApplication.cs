@@ -1,5 +1,3 @@
-using LocalRag.Infrastructure.Ollama;
-using LocalRag.Infrastructure.Qdrant;
 using LocalRag.Ingestion;
 using LocalRag.Retrieval;
 
@@ -8,21 +6,24 @@ namespace LocalRag.Application;
 public sealed class RagApplication
 {
     private readonly RagSettings _settings;
-    private readonly OllamaClient _ollama;
-    private readonly QdrantClient _qdrant;
+    private readonly ILocalAiClient _ai;
+    private readonly IVectorStore _vectorStore;
 
-    public RagApplication(RagSettings settings)
+    public RagApplication(
+        RagSettings settings,
+        ILocalAiClient ai,
+        IVectorStore vectorStore)
     {
         _settings = settings;
-        _ollama = new OllamaClient(settings.OllamaUrl);
-        _qdrant = new QdrantClient(settings.QdrantUrl, settings.CollectionName);
+        _ai = ai;
+        _vectorStore = vectorStore;
     }
 
     public async Task<RagStatus> GetStatusAsync()
     {
-        var ollamaReady = await _ollama.IsReadyAsync();
-        var qdrantReady = await _qdrant.IsReadyAsync();
-        var models = ollamaReady ? await _ollama.ListModelsAsync() : [];
+        var ollamaReady = await _ai.IsReadyAsync();
+        var qdrantReady = await _vectorStore.IsReadyAsync();
+        var models = ollamaReady ? await _ai.ListModelsAsync() : [];
 
         return new RagStatus(ollamaReady, qdrantReady, models);
     }
@@ -40,8 +41,8 @@ public sealed class RagApplication
             return IngestResult.Failed("No .txt or .md files found.");
         }
 
-        var firstEmbedding = await _ollama.EmbedAsync(_settings.EmbeddingModel, "dimension probe");
-        await _qdrant.EnsureCollectionAsync(firstEmbedding.Length);
+        var firstEmbedding = await _ai.EmbedAsync(_settings.EmbeddingModel, "dimension probe");
+        await _vectorStore.EnsureCollectionAsync(firstEmbedding.Length);
 
         var indexedFiles = new List<IndexedFile>();
         var totalChunks = 0;
@@ -55,9 +56,8 @@ public sealed class RagApplication
             for (var i = 0; i < chunks.Length; i++)
             {
                 var chunk = chunks[i];
-                var vector = await _ollama.EmbedAsync(_settings.EmbeddingModel, chunk);
-                var point = QdrantPoint.FromChunk(file, i, chunk, vector);
-                await _qdrant.UpsertAsync(point);
+                var vector = await _ai.EmbedAsync(_settings.EmbeddingModel, chunk);
+                await _vectorStore.UpsertAsync(file, i, chunk, vector);
                 totalChunks++;
             }
 
@@ -82,14 +82,14 @@ public sealed class RagApplication
         }
 
         var prompt = PromptBuilder.Build(question, chunks);
-        var answer = await _ollama.ChatAsync(_settings.ChatModel, prompt);
+        var answer = await _ai.ChatAsync(_settings.ChatModel, prompt);
 
         return AskResult.WithAnswer(answer, chunks, RetrievalConfidence.From(chunks));
     }
 
     private async Task<IReadOnlyList<ScoredChunk>> RetrieveAsync(string question)
     {
-        var vector = await _ollama.EmbedAsync(_settings.EmbeddingModel, question);
-        return await _qdrant.SearchAsync(vector, _settings.TopK);
+        var vector = await _ai.EmbedAsync(_settings.EmbeddingModel, question);
+        return await _vectorStore.SearchAsync(vector, _settings.TopK);
     }
 }

@@ -2,11 +2,12 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using LocalRag.Application;
 using LocalRag.Retrieval;
 
 namespace LocalRag.Infrastructure.Qdrant;
 
-public sealed class QdrantClient(Uri baseUrl, string collectionName)
+public sealed class QdrantClient(Uri baseUrl, string collectionName) : IVectorStore
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -59,6 +60,12 @@ public sealed class QdrantClient(Uri baseUrl, string collectionName)
         var request = new { points = new[] { point } };
         using var response = await _http.PutAsJsonAsync($"/collections/{collectionName}/points?wait=true", request, JsonOptions);
         response.EnsureSuccessStatusCode();
+    }
+
+    public Task UpsertAsync(string source, int chunkIndex, string text, float[] vector)
+    {
+        var point = QdrantPoint.FromChunk(source, chunkIndex, text, vector);
+        return UpsertAsync(point);
     }
 
     public async Task<IReadOnlyList<ScoredChunk>> SearchAsync(float[] vector, int limit)

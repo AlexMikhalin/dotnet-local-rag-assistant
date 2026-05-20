@@ -7,4 +7,9 @@
     <Project Path="src/LocalRag.Ingestion/LocalRag.Ingestion.csproj" />
     <Project Path="src/LocalRag.Retrieval/LocalRag.Retrieval.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/LocalRag.Application.Tests/LocalRag.Application.Tests.csproj" />
+    <Project Path="tests/LocalRag.Ingestion.Tests/LocalRag.Ingestion.Tests.csproj" />
+    <Project Path="tests/LocalRag.Retrieval.Tests/LocalRag.Retrieval.Tests.csproj" />
+  </Folder>
 </Solution>

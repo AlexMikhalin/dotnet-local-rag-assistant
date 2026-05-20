@@ -1,9 +1,10 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using LocalRag.Application;
 
 namespace LocalRag.Infrastructure.Ollama;
 
-public sealed class OllamaClient(Uri baseUrl)
+public sealed class OllamaClient(Uri baseUrl) : ILocalAiClient
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private readonly HttpClient _http = new() { BaseAddress = baseUrl };

@@ -2,6 +2,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LocalRag.Application\LocalRag.Application.csproj" />
+    <ProjectReference Include="..\LocalRag.Infrastructure.Ollama\LocalRag.Infrastructure.Ollama.csproj" />
+    <ProjectReference Include="..\LocalRag.Infrastructure.Qdrant\LocalRag.Infrastructure.Qdrant.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
