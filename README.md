@@ -83,6 +83,18 @@ $env:RAG_CHAT_MODEL = "llama3.2:3b"
 $env:RAG_COLLECTION = "local_rag_documents"
 ```
 
+## Project Structure
+
+```text
+src/LocalRag.Console
+  App/             Console commands and interactive loop
+  Configuration/   Environment-based settings
+  Ollama/          Local embedding and chat client
+  Qdrant/          Vector database client and point model
+  Retrieval/       Prompt building, scored chunks, confidence
+  Text/            Document chunking
+```
+
 ## What This Demonstrates
 
 - Document ingestion
