@@ -225,6 +225,7 @@ internal sealed class RagConsoleApp(RagSettings settings)
         }
 
         var chunks = await RetrieveAsync(question);
+        PrintConfidence(chunks);
         PrintSources(chunks);
     }
 
@@ -252,6 +253,7 @@ internal sealed class RagConsoleApp(RagSettings settings)
         Console.WriteLine(answer.Trim());
         Console.WriteLine();
 
+        PrintConfidence(chunks);
         PrintSources(chunks);
     }
 
@@ -323,6 +325,13 @@ internal sealed class RagConsoleApp(RagSettings settings)
             Console.WriteLine(TrimForConsole(chunk.Text));
             Console.WriteLine();
         }
+    }
+
+    private static void PrintConfidence(IReadOnlyList<ScoredChunk> chunks)
+    {
+        var confidence = RetrievalConfidence.From(chunks);
+        Console.WriteLine($"Retrieval confidence: {confidence.Label} ({confidence.Explanation})");
+        Console.WriteLine();
     }
 
     private static string TrimForConsole(string text)
@@ -547,6 +556,26 @@ internal sealed record QdrantPoint(
 }
 
 internal sealed record ScoredChunk(float Score, string Source, int ChunkIndex, string Text);
+
+internal sealed record RetrievalConfidence(string Label, string Explanation)
+{
+    public static RetrievalConfidence From(IReadOnlyList<ScoredChunk> chunks)
+    {
+        if (chunks.Count == 0)
+        {
+            return new RetrievalConfidence("None", "no matching context was found");
+        }
+
+        var topScore = chunks.Max(chunk => chunk.Score);
+        return topScore switch
+        {
+            >= 0.55f => new RetrievalConfidence("High", $"top match score {topScore:0.000}"),
+            >= 0.40f => new RetrievalConfidence("Medium", $"top match score {topScore:0.000}"),
+            >= 0.25f => new RetrievalConfidence("Low", $"top match score {topScore:0.000}"),
+            _ => new RetrievalConfidence("Very low", $"top match score {topScore:0.000}")
+        };
+    }
+}
 
 internal static class TextChunker
 {

@@ -90,5 +90,6 @@ $env:RAG_COLLECTION = "local_rag_documents"
 - Embeddings
 - Vector search
 - RAG prompt construction
+- Retrieval confidence scoring
 - Source attribution
 - Local AI workflow without paid cloud APIs
