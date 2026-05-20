@@ -1,13 +1,12 @@
 using System.Net.Http;
 using System.Text;
+using LocalRag.Application;
+using LocalRag.Retrieval;
 
-namespace LocalRag;
+namespace LocalRag.Cli;
 
-internal sealed class RagConsoleApp(RagSettings settings)
+internal sealed class RagConsoleApp(RagApplication application, RagSettings settings)
 {
-    private readonly OllamaClient _ollama = new(settings.OllamaUrl);
-    private readonly QdrantClient _qdrant = new(settings.QdrantUrl, settings.CollectionName);
-
     public async Task RunAsync(string[] args)
     {
         if (args.Length == 0)
@@ -21,7 +20,7 @@ internal sealed class RagConsoleApp(RagSettings settings)
 
     private async Task RunInteractiveAsync()
     {
-        Console.WriteLine("LocalRag.Console interactive mode");
+        Console.WriteLine("LocalRag.Cli interactive mode");
         Console.WriteLine("Type `help` to see commands or `exit` to close.");
         Console.WriteLine();
 
@@ -139,23 +138,20 @@ internal sealed class RagConsoleApp(RagSettings settings)
 
     private async Task PrintStatusAsync()
     {
+        var status = await application.GetStatusAsync();
+
         Console.WriteLine("Local RAG status");
         Console.WriteLine($"Ollama:  {settings.OllamaUrl}");
         Console.WriteLine($"Qdrant:  {settings.QdrantUrl}");
         Console.WriteLine($"Index:   {settings.CollectionName}");
         Console.WriteLine();
+        Console.WriteLine($"Ollama reachable: {YesNo(status.OllamaReady)}");
+        Console.WriteLine($"Qdrant reachable: {YesNo(status.QdrantReady)}");
 
-        var ollamaReady = await _ollama.IsReadyAsync();
-        var qdrantReady = await _qdrant.IsReadyAsync();
-
-        Console.WriteLine($"Ollama reachable: {YesNo(ollamaReady)}");
-        Console.WriteLine($"Qdrant reachable: {YesNo(qdrantReady)}");
-
-        if (ollamaReady)
+        if (status.OllamaReady)
         {
-            var models = await _ollama.ListModelsAsync();
             Console.WriteLine("Ollama models:");
-            foreach (var model in models.DefaultIfEmpty("(none pulled yet)"))
+            foreach (var model in status.OllamaModels.DefaultIfEmpty("(none pulled yet)"))
             {
                 Console.WriteLine($"  - {model}");
             }
@@ -167,45 +163,23 @@ internal sealed class RagConsoleApp(RagSettings settings)
         var inputPath = args.Length > 0 ? args[0] : "sample-docs";
         var fullPath = Path.GetFullPath(inputPath);
 
-        if (!Directory.Exists(fullPath) && !File.Exists(fullPath))
-        {
-            Console.WriteLine($"Path not found: {fullPath}");
-            return;
-        }
-
-        var files = FindTextFiles(fullPath).ToArray();
-        if (files.Length == 0)
-        {
-            Console.WriteLine("No .txt or .md files found.");
-            return;
-        }
-
         Console.WriteLine($"Embedding model: {settings.EmbeddingModel}");
-        Console.WriteLine($"Files found: {files.Length}");
 
-        var firstEmbedding = await _ollama.EmbedAsync(settings.EmbeddingModel, "dimension probe");
-        await _qdrant.EnsureCollectionAsync(firstEmbedding.Length);
-
-        var totalChunks = 0;
-        foreach (var file in files)
+        var result = await application.IngestAsync(fullPath);
+        if (!result.Success)
         {
-            var text = await File.ReadAllTextAsync(file);
-            var chunks = TextChunker.Split(text, settings.ChunkSize, settings.ChunkOverlap).ToArray();
+            Console.WriteLine(result.Message);
+            return;
+        }
 
-            Console.WriteLine($"Indexing {Path.GetRelativePath(Environment.CurrentDirectory, file)} ({chunks.Length} chunks)");
-
-            for (var i = 0; i < chunks.Length; i++)
-            {
-                var chunk = chunks[i];
-                var vector = await _ollama.EmbedAsync(settings.EmbeddingModel, chunk);
-                var point = QdrantPoint.FromChunk(file, i, chunk, vector);
-                await _qdrant.UpsertAsync(point);
-                totalChunks++;
-            }
+        Console.WriteLine($"Files found: {result.FilesIndexed}");
+        foreach (var file in result.IndexedFiles)
+        {
+            Console.WriteLine($"Indexing {file.Source} ({file.ChunkCount} chunks)");
         }
 
         Console.WriteLine();
-        Console.WriteLine($"Done. Indexed chunks: {totalChunks}");
+        Console.WriteLine($"Done. Indexed chunks: {result.ChunksIndexed}");
     }
 
     private async Task SearchAsync(string[] args)
@@ -217,9 +191,9 @@ internal sealed class RagConsoleApp(RagSettings settings)
             return;
         }
 
-        var chunks = await RetrieveAsync(question);
-        PrintConfidence(chunks);
-        PrintSources(chunks);
+        var result = await application.SearchAsync(question);
+        PrintConfidence(result.Confidence);
+        PrintSources(result.Chunks);
     }
 
     private async Task AskAsync(string[] args)
@@ -231,59 +205,27 @@ internal sealed class RagConsoleApp(RagSettings settings)
             return;
         }
 
-        var chunks = await RetrieveAsync(question);
-        if (chunks.Count == 0)
+        var result = await application.AskAsync(question);
+        if (!result.HasContext)
         {
             Console.WriteLine("No context found. Run `dotnet run -- ingest sample-docs` first.");
             return;
         }
 
-        var prompt = PromptBuilder.Build(question, chunks);
-
         Console.WriteLine("Answer");
         Console.WriteLine("------");
-        var answer = await _ollama.ChatAsync(settings.ChatModel, prompt);
-        Console.WriteLine(answer.Trim());
+        Console.WriteLine(result.Answer.Trim());
         Console.WriteLine();
 
-        PrintConfidence(chunks);
-        PrintSources(chunks);
-    }
-
-    private async Task<IReadOnlyList<ScoredChunk>> RetrieveAsync(string question)
-    {
-        var vector = await _ollama.EmbedAsync(settings.EmbeddingModel, question);
-        return await _qdrant.SearchAsync(vector, settings.TopK);
+        PrintConfidence(result.Confidence);
+        PrintSources(result.Chunks);
     }
 
     private static string ReadQuestion(string[] args) => string.Join(' ', args).Trim();
 
-    private static IEnumerable<string> FindTextFiles(string path)
-    {
-        if (File.Exists(path))
-        {
-            var extension = Path.GetExtension(path).ToLowerInvariant();
-            if (extension is ".txt" or ".md")
-            {
-                yield return path;
-            }
-
-            yield break;
-        }
-
-        foreach (var file in Directory.EnumerateFiles(path, "*.*", SearchOption.AllDirectories))
-        {
-            var extension = Path.GetExtension(file).ToLowerInvariant();
-            if (extension is ".txt" or ".md")
-            {
-                yield return file;
-            }
-        }
-    }
-
     private static void PrintHelp()
     {
-        Console.WriteLine("LocalRag.Console");
+        Console.WriteLine("LocalRag.Cli");
         Console.WriteLine();
         Console.WriteLine("Commands:");
         Console.WriteLine("  status                         Check Ollama and Qdrant");
@@ -320,9 +262,8 @@ internal sealed class RagConsoleApp(RagSettings settings)
         }
     }
 
-    private static void PrintConfidence(IReadOnlyList<ScoredChunk> chunks)
+    private static void PrintConfidence(RetrievalConfidence confidence)
     {
-        var confidence = RetrievalConfidence.From(chunks);
         Console.WriteLine($"Retrieval confidence: {confidence.Label} ({confidence.Explanation})");
         Console.WriteLine();
     }

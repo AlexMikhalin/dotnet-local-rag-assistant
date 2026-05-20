@@ -1,4 +1,4 @@
-namespace LocalRag;
+namespace LocalRag.Infrastructure.Ollama;
 
 internal sealed record OllamaTagsResponse(OllamaModel[] Models);
 

@@ -1,8 +1,8 @@
 using System.Text;
 
-namespace LocalRag;
+namespace LocalRag.Retrieval;
 
-internal static class PromptBuilder
+public static class PromptBuilder
 {
     public static string Build(string question, IReadOnlyList<ScoredChunk> chunks)
     {

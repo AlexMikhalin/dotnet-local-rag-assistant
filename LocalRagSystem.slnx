@@ -1,5 +1,10 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/LocalRag.Console/LocalRag.Console.csproj" />
+    <Project Path="src/LocalRag.Application/LocalRag.Application.csproj" />
+    <Project Path="src/LocalRag.Cli/LocalRag.Cli.csproj" />
+    <Project Path="src/LocalRag.Infrastructure.Ollama/LocalRag.Infrastructure.Ollama.csproj" />
+    <Project Path="src/LocalRag.Infrastructure.Qdrant/LocalRag.Infrastructure.Qdrant.csproj" />
+    <Project Path="src/LocalRag.Ingestion/LocalRag.Ingestion.csproj" />
+    <Project Path="src/LocalRag.Retrieval/LocalRag.Retrieval.csproj" />
   </Folder>
 </Solution>

@@ -1,9 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace LocalRag;
+namespace LocalRag.Infrastructure.Qdrant;
 
-internal sealed record QdrantPoint(
+public sealed record QdrantPoint(
     string Id,
     float[] Vector,
     Dictionary<string, object> Payload)

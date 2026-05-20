@@ -1,6 +1,6 @@
-namespace LocalRag;
+namespace LocalRag.Ingestion;
 
-internal static class TextChunker
+public static class TextChunker
 {
     public static IEnumerable<string> Split(string text, int chunkSize, int overlap)
     {

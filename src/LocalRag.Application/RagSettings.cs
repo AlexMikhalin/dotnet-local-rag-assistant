@@ -1,6 +1,6 @@
-namespace LocalRag;
+namespace LocalRag.Application;
 
-internal sealed record RagSettings(
+public sealed record RagSettings(
     Uri OllamaUrl,
     Uri QdrantUrl,
     string CollectionName,

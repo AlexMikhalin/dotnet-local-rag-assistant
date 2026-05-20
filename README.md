@@ -35,7 +35,7 @@ docker compose up -d
 Start interactive mode:
 
 ```powershell
-dotnet run --project .\src\LocalRag.Console
+dotnet run --project .\src\LocalRag.Cli
 ```
 
 Then type commands such as:
@@ -50,31 +50,31 @@ exit
 Check local services:
 
 ```powershell
-dotnet run --project .\src\LocalRag.Console -- status
+dotnet run --project .\src\LocalRag.Cli -- status
 ```
 
 Index the sample documents:
 
 ```powershell
-dotnet run --project .\src\LocalRag.Console -- ingest sample-docs
+dotnet run --project .\src\LocalRag.Cli -- ingest sample-docs
 ```
 
 Search without generating an answer:
 
 ```powershell
-dotnet run --project .\src\LocalRag.Console -- search "What does this project use Qdrant for?"
+dotnet run --project .\src\LocalRag.Cli -- search "What does this project use Qdrant for?"
 ```
 
 Ask a RAG question:
 
 ```powershell
-dotnet run --project .\src\LocalRag.Console -- ask "What skills does this project show for a portfolio?"
+dotnet run --project .\src\LocalRag.Cli -- ask "What skills does this project show for a portfolio?"
 ```
 
 Recommended smoke-test question:
 
 ```powershell
-dotnet run --project .\src\LocalRag.Console -- ask "What does this project use Ollama and Qdrant for?"
+dotnet run --project .\src\LocalRag.Cli -- ask "What does this project use Ollama and Qdrant for?"
 ```
 
 ## Configuration
@@ -92,13 +92,13 @@ $env:RAG_COLLECTION = "local_rag_documents"
 ## Project Structure
 
 ```text
-src/LocalRag.Console
-  App/             Console commands and interactive loop
-  Configuration/   Environment-based settings
-  Ollama/          Local embedding and chat client
-  Qdrant/          Vector database client and point model
-  Retrieval/       Prompt building, scored chunks, confidence
-  Text/            Document chunking
+src/
+  LocalRag.Cli/                         Console app and interactive loop
+  LocalRag.Application/                 Use cases, settings, orchestration
+  LocalRag.Ingestion/                   Document discovery and chunking
+  LocalRag.Retrieval/                   Prompt building, scored chunks, confidence
+  LocalRag.Infrastructure.Ollama/       Ollama HTTP client
+  LocalRag.Infrastructure.Qdrant/       Qdrant HTTP client and point model
 ```
 
 ## What This Demonstrates

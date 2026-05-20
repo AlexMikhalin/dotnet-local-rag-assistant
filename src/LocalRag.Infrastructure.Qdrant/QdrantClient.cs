@@ -2,10 +2,11 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using LocalRag.Retrieval;
 
-namespace LocalRag;
+namespace LocalRag.Infrastructure.Qdrant;
 
-internal sealed class QdrantClient(Uri baseUrl, string collectionName)
+public sealed class QdrantClient(Uri baseUrl, string collectionName)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {

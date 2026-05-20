@@ -1,6 +1,6 @@
-namespace LocalRag;
+namespace LocalRag.Retrieval;
 
-internal sealed record RetrievalConfidence(string Label, string Explanation)
+public sealed record RetrievalConfidence(string Label, string Explanation)
 {
     public static RetrievalConfidence From(IReadOnlyList<ScoredChunk> chunks)
     {
